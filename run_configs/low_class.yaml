@@ -1,0 +1,36 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 15
+  accelerator: cpu
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.segmentation_module.SegmentationModule
+  init_args:
+    model:
+      class_path: segmentation_models_pytorch.Unet
+      init_args:
+        encoder_name: "efficientnet-b7"
+        in_channels: 1
+        classes: 3
+    loss:
+      # class_path: torch.nn.CrossEntropyLoss
+      class_path: segmentation_models_pytorch.losses.DiceLoss
+      # class_path: segmentation_models_pytorch.losses.JaccardLoss
+      init_args:
+        mode: multiclass
+        log_loss: true
+        #classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+        classes: [1, 2]
+    #num_classes: 48
+    num_classes: 3
+data:
+  class_path: spine_annotator.datasets.segmentation_dataset.SegmentationDataModule
+  init_args:
+    data_dir: <path>
+    batch_size: 4
+    num_workers: 4
+    slice_wise: true
+    augment: true
+    add_adjacent_slices: false
+    add_bs_wk_as_channels: false

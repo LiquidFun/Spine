@@ -1,0 +1,17 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 50
+  accelerator: cpu
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.gnn_module.GNNModule
+  init_args:
+    model:
+      class_path: spine_annotator.models.classification.gnn.EncoderOnly
+data:
+  class_path: spine_annotator.datasets.patch_segmentation_dataset.PatchSegmentationDataModule
+  init_args:
+    data_dir: <path>
+    batch_size: 1
+    num_workers: 2

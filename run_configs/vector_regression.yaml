@@ -1,0 +1,41 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 100
+  min_epochs: 10
+  accelerator: cpu
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 5
+        mode: min
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.regression_module.RegressionModule
+  init_args:
+    model:
+      class_path: spine_annotator.models.vector.mlp.MLP
+      init_args:
+        input_shape: [10, 3]
+        hidden_channels: [128, 256, 512, 1024]
+        output_shape: 1
+      # class_path: torchvision.ops.MLP
+      # init_args:
+      #   in_channels: 30
+      #   hidden_channels: [64, 64, 64, 1]
+        # output_dim: 1
+    loss:
+      class_path: torch.nn.MSELoss
+      # class_path: torch.nn.L1Loss
+    # augmentation:
+    #   class_path: spine_annotator.datasets.augmentation.ImageAugmentation
+    #   init_args:
+    #     use_mask: false
+    #     cropping_type: "none"
+data:
+  class_path: spine_annotator.datasets.feature_dataset.FeatureDataModule
+  init_args:
+    batch_size: 4096
+    num_workers: 8
+    sample_size: 10

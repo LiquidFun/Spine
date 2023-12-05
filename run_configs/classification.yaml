@@ -1,0 +1,65 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 100
+  min_epochs: 15
+  accelerator: cpu
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 10
+        mode: min
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.classification_module.ClassificationModule
+  init_args:
+    model:
+      # class_path: spine_annotator.utils.proxy_class.ProxyClass
+      # init_args:
+      #   cls: torchvision.models.efficientnet.efficientnet_b4
+      #   num_classes: 48
+      # class_path: spine_annotator.models.classification.classification_3d_model.Classification3DModel
+      class_path: spine_annotator.models.classification.classification_3d_model.Classification3DModel
+    loss:
+      class_path: torch.nn.MSELoss
+      #class_path: torch.nn.MSELoss
+      # class_path: segmentation_models_pytorch.losses.DiceLoss
+      # class_path: segmentation_models_pytorch.losses.JaccardLoss
+      # init_args:
+      #   mode: multiclass
+      #   log_loss: true
+      #   classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25]
+        # classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+        # classes: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]
+        # classes: [1, 2]
+    # augmentation:
+    #   class_path: spine_annotator.datasets.augmentation.ImageAugmentation
+    #   init_args:
+    #     cropping_type: "same"
+    #     geometric_aug_type: "none"
+    #     photometric_aug_type: "none"
+    # num_classes: 48
+    # num_classes: 48
+data:
+  class_path: spine_annotator.datasets.segmentation_dataset.SegmentationDataModule
+  init_args:
+    data_dir:
+      - datasets/nako_splits/train_seg.csv
+      - datasets/nako_splits/val_seg.csv
+    batch_size: 1
+    num_workers: 4
+    gt_format:
+      separation: instance
+      order: y-sort
+      include: bs+wk
+      type: classification
+
+    slice_wise: false
+    augment: false
+    crop_height_to_px: 416
+    # target_shape: [18, 320, 416]
+    triple_same_slice: false
+    add_adjacent_slices: false
+    add_bs_wk_as_channels: false
+    # use_only_n_center_slices: 8

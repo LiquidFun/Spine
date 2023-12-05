@@ -1,0 +1,34 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 30
+  accelerator: cpu
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 5
+        mode: min
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.regression_module.RegressionModule
+  init_args:
+    model:
+      class_path: spine_annotator.models.regression.regression_model.RegressionModel
+      init_args:
+        out_features: 4
+    loss:
+      # class_path: torch.nn.L1Loss
+      class_path: torch.nn.MSELoss
+    augmentation:
+      class_path: spine_annotator.datasets.augmentation.ImageAugmentation
+      init_args:
+        use_mask: false
+        cropping_type: "none"
+data:
+  class_path: spine_annotator.datasets.metadata_prediction_dataset.MetadataPredictionModule
+  init_args:
+    data_dir: <path>
+    batch_size: 8
+    num_workers: 8
+    gt_type: [sex, size, weight, age]

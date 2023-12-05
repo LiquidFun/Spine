@@ -1,0 +1,22 @@
+# pytorch_lightning==1.8.0rc0
+seed_everything: true
+trainer:
+  max_epochs: 50
+  accelerator: cpu
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.early_stopping.EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 5
+        mode: min
+ckpt_path: null
+model:
+  class_path: spine_annotator.models.pl_modules.vector_module.VectorModule
+  init_args:
+    model:
+      class_path: spine_annotator.models.vector.ffn.FFN
+data:
+  class_path: spine_annotator.datasets.feature_dataset.FeatureDataModule
+  init_args:
+    batch_size: 1
+    num_workers: 2

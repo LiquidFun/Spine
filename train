@@ -1,0 +1,24 @@
+#!/bin/bash
+
+if [[ -z "$TMUX" ]]; then
+  echo "ERROR: Not in a tmux session"
+  exit 1
+fi
+
+if [ "$#" -lt 2 ]; then
+    echo "Usage: $0 <device> <config> [<config>...]"
+    echo "For example: $0 2 run_configs/config1.yaml run_configs/config2.yaml"
+    exit 1
+fi
+
+device=$1
+shift
+
+for config in "$@"; do
+    poetry run python -m spine_annotator.cli.cli fit \
+        --config="$config" \
+        --trainer.devices="[$device]" \
+        --trainer.accelerator=gpu \
+        || continue
+done
+
