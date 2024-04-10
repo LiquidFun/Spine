@@ -1,6 +1,8 @@
 # spine_annotator
 
-A spine module to annotate partial MRI scans
+A python library including pretrained models in order to annotate vertebrae and IVDs (intevertebral discs) on small field-of-view MRIs. This was created as part of my [master's thesis](https://brutenis.net/master-thesis) which was submitted on 9 November 2023.
+
+![](media/showcase.png)
 
 
 ## Installation
@@ -13,12 +15,6 @@ poetry install
 
 ```sh
 poetry shell
-```
-
-* Or run command in environment
-
-```sh
-poetry run jupyter notebook
 ```
 
 ### Pre-commit

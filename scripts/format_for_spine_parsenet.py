@@ -5,7 +5,7 @@ import nibabel as nib
 import numpy as np
 from nibabel import Nifti1Image
 
-from spine_annotator.instance_separation.instance_separation import separate_segmented_rois
+from spine.instance_separation.instance_separation import separate_segmented_rois
 
 if __name__ == "__main__":
     data = Path("<path>")
