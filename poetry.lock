@@ -3785,36 +3785,37 @@ zstd = ["zstandard (>=0.18.0)"]
 
 [[package]]
 name = "vispy"
-version = "0.13.0"
+version = "0.14.2"
 description = "Interactive visualization in Python"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.8"
 files = [
-    {file = "vispy-0.13.0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:d1fbd38dcf1586567fc2f77a4a9080e9eb0e006eefa302065049a9c24e69f275"},
-    {file = "vispy-0.13.0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:8a7e8df037f286606767e157070ec959198014b7233d7d2a453222a324f10918"},
-    {file = "vispy-0.13.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:54c4810f3e5eba8855c972d4b33986e8f287f755572c8a399487ddff1f76354f"},
-    {file = "vispy-0.13.0-cp310-cp310-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:cdfb1ea80a966989f3a6791ef0c823e9975144be558ba1d083f24a7203be95d8"},
-    {file = "vispy-0.13.0-cp310-cp310-win_amd64.whl", hash = "sha256:7ac06cacc2abdc4557e1c2d8225e235e26beef5d489ba0e90b7f654839753ef9"},
-    {file = "vispy-0.13.0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0f986b41530ad51b3751c5a6815cb8e9c0950d3575c814deebfdbf2eb4a4f8dd"},
-    {file = "vispy-0.13.0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:2576335452840995605cde52d475d61897ae6d294253174cf1d2ca06efd5bbd9"},
-    {file = "vispy-0.13.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d10e109622534738abb38b4d4111d00079184662c6501a53e5cc66a375c9222c"},
-    {file = "vispy-0.13.0-cp311-cp311-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b2611e85ff2c239199cac5447f3c834a3d3fad3339d760fbfd02d85e38a7e96e"},
-    {file = "vispy-0.13.0-cp311-cp311-win_amd64.whl", hash = "sha256:0f37efcd01b44d745021fefc18e35df2cfd204a9173cd58dd35911f2b07e2c75"},
-    {file = "vispy-0.13.0-cp37-cp37m-macosx_10_9_x86_64.whl", hash = "sha256:47d7d67accc25d24665adbad8a7a64e7bc69a83059d44c83a98fd2409ecd5600"},
-    {file = "vispy-0.13.0-cp37-cp37m-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c240af15bc70c9dacdfe923d30f6e9e82907c0857428dbc9a99786f926a31ab8"},
-    {file = "vispy-0.13.0-cp37-cp37m-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8522a38aae34eee3a7dd18460616a8294a1668c9e9faa097c10c804e2ee9f2b6"},
-    {file = "vispy-0.13.0-cp37-cp37m-win_amd64.whl", hash = "sha256:70d7b799e89717a8112eeb833de9d4f5a978abab224b76c83d67733b66bde628"},
-    {file = "vispy-0.13.0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:8a9fdf2b1f97878b559b04f02b32efe64cf43fb51c951d666efcab81990bdb1b"},
-    {file = "vispy-0.13.0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:beac9dc6887a531eebbc80463862fed7cdfae3f422b61980a07eb7f8da1601ef"},
-    {file = "vispy-0.13.0-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0ddf2ab4e06ffc4eddf071ef703b668a1d2b7c1f43ab9c2aee78b0145348518a"},
-    {file = "vispy-0.13.0-cp38-cp38-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:aa206af978ce3255b2ffb598b2ab584497ad719489488c6e761b5ceaab5913ae"},
-    {file = "vispy-0.13.0-cp38-cp38-win_amd64.whl", hash = "sha256:55edb13a073406e1da69288837ef216619c72e8fe6462f683326675f8f957be6"},
-    {file = "vispy-0.13.0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:f1089e369e0b6dfb11b688491190616bf09e4d8946013ccdf922c25bcaf54b3a"},
-    {file = "vispy-0.13.0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:2ad1f4402c2719cc689dd992e7af5a6e78f30d9dbd1d7b2fd320459a4731dea2"},
-    {file = "vispy-0.13.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:6665de072b41d195e2297ad8f2a29c31cc8742641f48681222d328cc3fdea442"},
-    {file = "vispy-0.13.0-cp39-cp39-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3bdd09249a4b0da2067623a3809989001c2867bdb5fa1892fd32c399886ef954"},
-    {file = "vispy-0.13.0-cp39-cp39-win_amd64.whl", hash = "sha256:249fbbf9d68149472a32f87dd440b463ceab88437c3c87ada714f87ce0bafde1"},
-    {file = "vispy-0.13.0.tar.gz", hash = "sha256:b59f7bcf6528c914bca6ceb4ad959984c6604bea34663012a72ab88ad8889eaf"},
+    {file = "vispy-0.14.2-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:be9cafc28da544692e4377168448b0901c06eef62057deeab861e7c38fe5f042"},
+    {file = "vispy-0.14.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:bed0fefc54c0b63cbc326b4fca043cbb490a329a14edb2e24f5d714afc56d8e2"},
+    {file = "vispy-0.14.2-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5b178cd8921c02de0405a5c4af7a4d48185849810bccc30d404ac4bac0f36846"},
+    {file = "vispy-0.14.2-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:2db2a4487ede8356eea4c29a189b345ca7f904bb507d0193356e8c3924a85ac8"},
+    {file = "vispy-0.14.2-cp310-cp310-win_amd64.whl", hash = "sha256:0738c0b606939978309280c5528dc08db368d6b3a88e8eee532e5df9050d98cb"},
+    {file = "vispy-0.14.2-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:15bb4e80e533651b9f9132839a62cabf053988f2a87f066d492bdba6a807a3f0"},
+    {file = "vispy-0.14.2-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:f3230929b11e2515f59396f8972dd0864e6d4133297a29b30581173a59b8fc30"},
+    {file = "vispy-0.14.2-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:492eba503d1831fd55f16c8d17a543a3f811c2acee22fb212b9402622685a165"},
+    {file = "vispy-0.14.2-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:4f2a0b26219e6b307b039a925da00def4926b9255adf88fd24beeb3301e120e6"},
+    {file = "vispy-0.14.2-cp311-cp311-win_amd64.whl", hash = "sha256:8bf14394d0cd612751e8df29ac530538185ae963b0969a19fc648da04413c71a"},
+    {file = "vispy-0.14.2-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:3b93616278cbcfb5a529c06d278085cf57d93ce57dc063078998564fbcca3a57"},
+    {file = "vispy-0.14.2-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:f6af62ff8f5c3723bf15fddd8deb0057eb750e665af5698920c46e2351997df8"},
+    {file = "vispy-0.14.2-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:d50eeca053fdcd7f2f1f93204f327116018269453ef99a092f79308eab76ddd3"},
+    {file = "vispy-0.14.2-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0b151f038b09829eddeffd1138e10a5cf98cdd3ef5f76427abd04718c33e0492"},
+    {file = "vispy-0.14.2-cp312-cp312-win_amd64.whl", hash = "sha256:6f493f37db6130ae2a60fb97ad714429dd4b4fa8551883a3a6aa374efab7e04f"},
+    {file = "vispy-0.14.2-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:e389673720aaff3ef647c9bbf15ebb0d50cfb7d959b59a321056087eec8ab7de"},
+    {file = "vispy-0.14.2-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:721e076169075af80ae000b691a7d8b568a297deb9c3b781f6840b8e60c9514e"},
+    {file = "vispy-0.14.2-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:95f1e6463ffc8aca6fdb4101cb65196b2725ca9f677a267acf2c675c660d12dd"},
+    {file = "vispy-0.14.2-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9951832b2bc1f964d9fc916c207f7771357ca34747863cfbd4a7a34cbed76550"},
+    {file = "vispy-0.14.2-cp38-cp38-win_amd64.whl", hash = "sha256:6d944ccd0d7fb1b8fa694781cb036cb1011853e6d3e1038f5b4da4d0094ed9a1"},
+    {file = "vispy-0.14.2-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:deb724e8af31d3d6bd135b88cf7a17fc457af02a27796fcade9a14b9747c36c0"},
+    {file = "vispy-0.14.2-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:98405adc58b9fb119dceb7c6606b05304cf1e21826f7877e19c43c750b03386b"},
+    {file = "vispy-0.14.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:c4ab02e56e655a0e53c60f2b3b4fbc87361fbd6126d28fc9ad11e32313eab9a3"},
+    {file = "vispy-0.14.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:679d151bd767f9b04d5d8cb73caf46f5ffbd73437ac707e1ed703172e7496fcd"},
+    {file = "vispy-0.14.2-cp39-cp39-win_amd64.whl", hash = "sha256:cf5882d996e31c94d67a678ffa41575c14c23cba856baf2f048a4bf5c2bbaa37"},
+    {file = "vispy-0.14.2.tar.gz", hash = "sha256:eed8b44d6f5c87bd295b24aa9a2e0e4e6dc6a905ccee01b2d41c8fbf0a767b3d"},
 ]
 
 [package.dependencies]
@@ -4228,4 +4229,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8.1,<3.12.0"
-content-hash = "6a60b1548d01cc8dd900d83273eb0f8491ef258733407d66a7cec2c260399c4b"
+content-hash = "cf1b7e55840375be0057b6548d601e2a8134a7ec2331cf50e73cdcf759314c94"
