@@ -11,14 +11,13 @@ def main():
 
     inference = SegmentationInference()
     sample_iterator = SampleIterator(
-        expand_path_to_data_dirs(RAW_NAKO_DATASET_PATH), add_adjacent_slices=True, skip_first_percent=0.9505
+        expand_path_to_data_dirs(RAW_NAKO_DATASET_PATH), add_adjacent_slices=True
     )
 
     for image, *_ in sample_iterator:
         print(image.shape)
-        segmentation = inference.instance_segmentation_for_image(image)
-        print(segmentation)
-        open_in_blender({"instances": segmentation["instances_post_processed"]})
+        segmentation = inference.segment(image)
+        open_in_blender({"instances": segmentation.instance_segmentation})
         break
 
 

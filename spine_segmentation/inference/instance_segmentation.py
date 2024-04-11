@@ -341,7 +341,7 @@ class SegmentationInference:
             device=instance_segmentation_device
         )
 
-    def instance_segmentation_for_image(
+    def segment(
         self,
         input_image,
         curr_dir=None,
@@ -373,7 +373,8 @@ class SegmentationInference:
             new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=curr_dir
         )
         new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
-        return new_npz
+        id_to_labels = get_labels_for_n_classes(49)
+        return SegmentationResult(inst_seg_input, new_npz["instances_post_processed"], id_to_labels)
 
 
 def main():
