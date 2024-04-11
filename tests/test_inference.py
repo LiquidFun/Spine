@@ -1,13 +1,13 @@
 from pathlib import Path
 
-from spine import SegmentationInference
-from spine.datasets.sample import SampleIterator
-from spine.datasets.segmentation_dataset import expand_path_to_data_dirs
-from spine.visualisation.blender.open_in_blender import open_in_blender
+from spine_segmentation import SegmentationInference
+from spine_segmentation.datasets.sample import SampleIterator
+from spine_segmentation.datasets.segmentation_dataset import expand_path_to_data_dirs
+from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
 
 
 def main():
-    from spine.resources.other_paths import RAW_NAKO_DATASET_PATH
+    from spine_segmentation.resources.other_paths import RAW_NAKO_DATASET_PATH
 
     inference = SegmentationInference()
     sample_iterator = SampleIterator(
