@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader, Dataset
 
 from spine_segmentation.datasets.augmentation import ImageAugmentation
 from spine_segmentation.datasets.sample import GTFormat, Sample
-from spine_segmentation.datasets.segmentation_dataset import get_potential_data_dirs
+from spine_segmentation.datasets.path_helper import get_potential_data_dirs
 from spine_segmentation.resources.paths import NAKO_DATASET_PATH
 
 

@@ -15,7 +15,8 @@ import numpy as np
 import onnx
 from loguru import logger
 
-from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule, expand_path_to_data_dirs
+from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
+from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
 
 # onnx_model_path = "models/segmentation/2023-08-31_Seg_Unet_mit.onnx"
 onnx_model_path = "models/segmentation/2023-09-12_Seg_Unet_mitb5.onnx"

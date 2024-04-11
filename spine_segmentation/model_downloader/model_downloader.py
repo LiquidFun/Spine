@@ -1,9 +1,9 @@
 import os
 from typing import Optional
+from pathlib import Path
 
 import requests
 from tqdm import tqdm
-from pathlib import Path
 
 
 def _get_config_path(program_name="spine") -> Path:

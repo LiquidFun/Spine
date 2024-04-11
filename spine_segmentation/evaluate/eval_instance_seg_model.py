@@ -24,7 +24,8 @@ colored_tracebacks()
 
 import numpy as np
 
-from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule, expand_path_to_data_dirs
+from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
+from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
 
 
 def get_dataloader(

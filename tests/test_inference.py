@@ -2,7 +2,7 @@ from pathlib import Path
 
 from spine_segmentation import SegmentationInference
 from spine_segmentation.datasets.sample import SampleIterator
-from spine_segmentation.datasets.segmentation_dataset import expand_path_to_data_dirs
+from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
 from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
 
 

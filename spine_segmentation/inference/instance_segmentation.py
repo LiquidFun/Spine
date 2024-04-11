@@ -3,10 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Union, Dict
 
-import torch
 
-from spine_segmentation.cli.cli import colored_tracebacks
-from spine_segmentation.datasets.sample import SampleIterator, get_random_crop_slice
 from spine_segmentation.inference.onnx_model import ONNXInferenceModel
 from spine_segmentation.instance_separation.instance_separation import (
     get_planes_from_rois,
@@ -14,23 +11,20 @@ from spine_segmentation.instance_separation.instance_separation import (
     separate_rois_with_labels,
     separate_segmented_rois_by_planes,
 )
-from spine_segmentation.plotting.plot_slice import get_stats, plot_npz, single_plot
 from spine_segmentation.resources.paths import TRAIN_SPLIT_CSV_PATH, VAL_SPLIT_CSV_PATH
 from spine_segmentation.resources.other_paths import RAW_NAKO_DATASET_PATH
 from spine_segmentation.spine_types.labels import get_labels_for_n_classes
 from spine_segmentation.utils.log_dir import get_next_log_dir
 from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
 
-colored_tracebacks()
-
 import numpy as np
-
-from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule, expand_path_to_data_dirs
 
 
 def get_dataloader(
     train_or_val: Literal["train", "val"], path: Union[Path, str] = None, *, bs: int = 16, crop_height: int = None
 ):
+    from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
+
     args = [] if path is None else [path]
     data_module = SegmentationDataModule(
         *args,
@@ -189,6 +183,12 @@ def print_stats_summary(stats):
 
 
 def plot_every_val_dataset(directory=None, device=3, model_height=896, cropped_height=None, cropped_V=None):
+    import torch
+    from spine_segmentation.datasets.sample import SampleIterator, get_random_crop_slice
+    from spine_segmentation.plotting.plot_slice import get_stats, plot_npz, single_plot
+    from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
+    from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
+
     if directory is None:
         directory = get_next_log_dir()
     directory = Path(directory)

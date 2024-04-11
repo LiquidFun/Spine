@@ -10,7 +10,6 @@ from typing import Dict, Iterable, List, Literal, Optional, Set, Tuple, Union
 import nibabel as nib
 import numpy as np
 import pydicom
-import torch
 
 from spine_segmentation.instance_separation.instance_separation import separate_rois_with_labels
 from spine_segmentation.resources.preloaded import get_measure_statistics
@@ -87,8 +86,7 @@ def _load_and_normalize(path, *args, return_nifti=False, **kwargs):
     return img
 
 
-class MissingGTError(Exception):
-    ...
+class MissingGTError(Exception): ...
 
 
 @lru_cache
@@ -120,6 +118,8 @@ class MetadataSample:
         self.gt = self._compose_groundtruth(gt_type)
 
     def _compose_groundtruth(self, gt_types: MetadataTypes):
+        import torch
+
         stats = get_measure_statistics()
         lookup = get_pid_to_index_lookup()
         try:

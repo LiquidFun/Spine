@@ -2,8 +2,6 @@ from pathlib import Path
 
 PROJECT_PATH = Path(__file__).absolute().parent.parent.parent
 
-CACHE_PATH = PROJECT_PATH / "cache"
-
 DATASETS_PATH = PROJECT_PATH / "datasets"
 REPORTS_PATH = PROJECT_PATH / "reports"
 MODELS_PATH = PROJECT_PATH / "models"
@@ -17,6 +15,9 @@ MEASURE_STATISTICS_PATH = DATASETS_PATH / "measure_statistics_new.csv"
 VECTOR_TABLE_PATH = DATASETS_PATH / "vector_table_new.npz"
 
 # Paths outside repository
+
+CACHE_PATH = Path("/tmp/spine-segmentation-cache")
+CACHE_PATH.mkdir(exist_ok=True)
 
 NAS_RESEARCH_PATH = Path("~/devel/data_remote/nas_research").expanduser().resolve()
 NAKO_DATASET_PATH = NAS_RESEARCH_PATH / "path"

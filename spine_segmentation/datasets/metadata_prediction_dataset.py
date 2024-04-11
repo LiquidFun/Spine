@@ -10,7 +10,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
 from spine_segmentation.datasets.sample import GTFormat, MetadataSample, MetadataTypes, get_pid_to_index_lookup
-from spine_segmentation.datasets.segmentation_dataset import get_potential_data_dirs
+from spine_segmentation.datasets.path_helper import get_potential_data_dirs
 from spine_segmentation.resources.paths import NAKO_DATASET_PATH
 
 
