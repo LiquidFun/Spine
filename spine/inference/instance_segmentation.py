@@ -1,6 +1,7 @@
 import random
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Union
+from typing import Literal, Union, Dict
 
 import torch
 
@@ -198,11 +199,6 @@ def plot_every_val_dataset(directory=None, device=3, model_height=896, cropped_h
     if cropped_height is not None:
         assert 50 <= cropped_V
 
-    onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=device)
-    # onnx_seg_inference.load_index_list()
-
-    onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(device=device)
-
     sample_iterator = SampleIterator(
         expand_path_to_data_dirs(RAW_NAKO_DATASET_PATH), add_adjacent_slices=True, skip_first_percent=0.9505
     )
@@ -288,56 +284,22 @@ def plot_every_val_dataset(directory=None, device=3, model_height=896, cropped_h
                 # ==================
 
                 cropped_seg_input = image[:, :, :, crop_slice].copy(order="C")
-                padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, image.shape[3] - cropped_height))
-                cropped_padded_seg_input = np.pad(cropped_seg_input, padding_to_896, mode="constant")
-                seg_npz = onnx_seg_inference.inference(cropped_padded_seg_input)
-
-                inst_seg_input = seg_npz["segmentation"][:, None, :, :]
-                cropped_inst_seg_input = inst_seg_input[:, :, :, :model_height]
-                padding_to_416 = ((0, 0), (0, 0), (0, 0), (0, model_height - cropped_height))
-                cropped_input_image_with_gt = np.concatenate(
-                    [
-                        np.pad(image[:, 1:2, :, crop_slice], padding_to_416, mode="constant"),
-                        (cropped_inst_seg_input == 1),
-                        (cropped_inst_seg_input == 2),
-                    ],
-                    axis=1,
+                new_npz = instance_segmentation_for_image(
+                    crop_slice,
+                    cropped_height,
+                    cropped_instance_gt,
+                    cropped_seg_input,
+                    curr_dir,
+                    directory,
+                    gt_npz,
+                    image,
+                    model_height,
+                    onnx_inst_inference,
+                    onnx_seg_inference,
+                    stats,
                 )
-                cropped_input_image_with_gt = cropped_input_image_with_gt.astype(np.float32)
-
-                cropped_input_image_without_gt = np.pad(
-                    image[:, :, :, crop_slice], padding_to_416, mode="constant"
-                ).astype(np.float32)
-
-                # ==================
-                # Create cropped input image for instance segmentation model
-                # ==================
-
-                # cropped_instance_seg_input = full_input_image_with_gt[:, :, :, crop_slice].copy(order="C")
-
-                # if True:
-                #     padding = ((0, 0), (0, 0), (0, 0), (0, image.shape[3] - height))
-                #     cropped_image = np.pad(cropped_image, padding, mode="constant")
-                #     cropped_gt = np.pad(cropped_gt, padding, mode="constant")
-
-                # npz["instances"] = onnx_inst_inference.inference(cropped_image, gt=cropped_gt)["instances"]
-                # npz["gt_instances"] = npz["instances"]
-                new_npz = onnx_inst_inference.inference(
-                    cropped_input_image_without_gt, gt=np.pad(cropped_instance_gt, padding_to_416, mode="constant")
-                )
-                new_npz["instances"] = new_npz["instances"] * 2 - (new_npz["instances"] != 0)
-                new_npz["id_to_label"] = gt_npz["id_to_label"]
-                new_npz["gt_id_to_label"] = gt_npz["id_to_label"]
-
-                new_npz["instances_post_processed"] = post_process_instances(
-                    new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=curr_dir
-                )
-
-                new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
-
                 stats.append(get_stats(new_npz["instances_post_processed"], new_npz["gt_instances"]))
                 np.savez_compressed(directory / "stats.npz", stats=stats)
-
                 open_npz_in_blender(new_npz)
                 plot_npz(new_npz, curr_dir / "plot.png", slices=range(7, 10), stats=stats[-1])
                 print_stats_summary(stats)
@@ -356,6 +318,62 @@ def plot_every_val_dataset(directory=None, device=3, model_height=896, cropped_h
 
     # open_npz_and_plot_rois(new_npz, curr_dir / "plot.png")
     # open_npz_in_blender_separate_rois(npz, curr_dir / "render.png")
+
+
+@dataclass
+class SegmentationResult:
+    semantic_segmentation: np.ndarray
+    instance_segmentation: np.ndarray
+    id_to_label: Dict[int, str]
+
+
+MODEL_HEIGHT = 896
+
+DeviceType = Union[Literal["CPU", "GPU"], int]
+
+
+class SegmentationInference:
+
+    def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU"):
+        self.model_height = MODEL_HEIGHT
+        self.onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=segmentation_device)
+        self.onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(
+            device=instance_segmentation_device
+        )
+
+    def instance_segmentation_for_image(
+        self,
+        input_image,
+        curr_dir=None,
+    ):
+        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, input_image.shape[3] - MODEL_HEIGHT))
+        cropped_padded_seg_input = np.pad(input_image, padding_to_896, mode="constant")
+        seg_npz = self.onnx_seg_inference.inference(cropped_padded_seg_input)
+        inst_seg_input = seg_npz["segmentation"][:, None, :, :]
+        cropped_inst_seg_input = inst_seg_input[:, :, :, :MODEL_HEIGHT]
+        padding_to_416 = ((0, 0), (0, 0), (0, 0), (0, MODEL_HEIGHT - MODEL_HEIGHT))
+        cropped_input_image_with_gt = np.concatenate(
+            [
+                np.pad(input_image[:, 1:2, :, :], padding_to_416, mode="constant"),
+                (cropped_inst_seg_input == 1),
+                (cropped_inst_seg_input == 2),
+            ],
+            axis=1,
+        )
+        cropped_input_image_with_gt = cropped_input_image_with_gt.astype(np.float32)
+        cropped_input_image_without_gt = np.pad(input_image[:, :, :, :], padding_to_416, mode="constant").astype(
+            np.float32
+        )
+
+        new_npz = self.onnx_inst_inference.inference(cropped_input_image_without_gt)
+        new_npz["instances"] = new_npz["instances"] * 2 - (new_npz["instances"] != 0)
+        # new_npz["id_to_label"] = gt_npz["id_to_label"]
+        # new_npz["gt_id_to_label"] = gt_npz["id_to_label"]
+        new_npz["instances_post_processed"] = post_process_instances(
+            new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=curr_dir
+        )
+        new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
+        return new_npz
 
 
 def main():

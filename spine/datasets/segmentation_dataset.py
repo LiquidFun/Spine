@@ -13,7 +13,8 @@ from torch.utils.data import DataLoader, Dataset
 
 from spine.datasets.augmentation import ImageAugmentation
 from spine.datasets.sample import GTFormat, Sample
-from spine.resources.paths import NAKO_DATASET_PATH, RAW_NAKO_DATASET_PATH
+from spine.resources.paths import NAKO_DATASET_PATH
+from spine.resources.other_paths import RAW_NAKO_DATASET_PATH
 
 
 class SegmentationDataset(Dataset):

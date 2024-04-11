@@ -1,4 +1,4 @@
-# Spine
+<h1 align="center">Spine</h1>
 
 A python library including pretrained models in order to annotate vertebrae and IVDs (intevertebral discs) on small FOV (field-of-view) MRIs. This was created as part of my [master's thesis](https://brutenis.net/master-thesis) which was submitted on 9 November 2023.
 

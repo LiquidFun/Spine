@@ -7,6 +7,7 @@ import onnxruntime
 import xxhash
 
 from spine.instance_separation.instance_separation import separate_rois_with_labels
+from spine.model_downloader.model_downloader import download_file_with_progress
 from spine.resources.paths import CACHE_PATH, MODELS_PATH
 from spine.utils.profiling import profile
 
@@ -20,6 +21,8 @@ class ONNXInferenceModel:
         height: int = 896,
     ):
         self.onnx_model_path = Path(onnx_model_path)
+        if not self.onnx_model_path.exists():
+            raise FileNotFoundError(f"Model {self.onnx_model_path.absolute()} does not exist!")
         self.device = device
         self.cache_path = CACHE_PATH / "onnx_inference" / self.onnx_model_path.stem
         self.index_list = None
@@ -40,41 +43,15 @@ class ONNXInferenceModel:
 
     @staticmethod
     def get_best_segmentation_model(*args, **kwargs):
-        onnx_model_path = MODELS_PATH / "segmentation/2023-09-12_Seg_Unet_mitb5.onnx"
+        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-06_Seg2_Unet_resnet152_896px.onnx"
+        onnx_model_path = download_file_with_progress(model_url)
         return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=True)
 
     @staticmethod
-    def get_new_segmentation_model(*args, **kwargs):
-        onnx_model_path = MODELS_PATH / "segmentation/2023-11-06_Seg_Unet_resnet152.onnx"
-        # onnx_model_path = MODELS_PATH / "segmentation/2023-09-12_Seg_Unet_mitb5.onnx"
-        return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=True)
-
-    @staticmethod
-    def get_train162_instance_segmentation_model(*args, px=416, **kwargs):
-        onnx_model_path = (
-            MODELS_PATH
-            # / f"instance_segmentation/2023-09-21_InstSeg_Unet_mitb5_wk-only_{px}px_input-seg.onnx"
-            # / f"instance_segmentation/2023-11-06_InstSeg_Unet_resnet152_wk-only_896px_no-input-seg.onnx"
-            / f"instance_segmentation/2023-11-04_InstSeg_Unet_mitb5_wk-only_896px_no-input-seg_train162.onnx"
-        )
-        return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False, height=px)
-
-    @staticmethod
-    def get_e2e_instance_segmentation_model(*args, px=416, **kwargs):
-        onnx_model_path = MODELS_PATH / f"2023-11-09_E2EInstSeg_Unet_resnet152_wk+bs_896px_no-input-seg.onnx"
-        return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False, height=px)
-
-    @staticmethod
-    def get_best_instance_segmentation_model(*args, px=416, **kwargs):
-        onnx_model_path = (
-            MODELS_PATH
-            # / f"instance_segmentation/2023-09-21_InstSeg_Unet_mitb5_wk-only_{px}px_input-seg.onnx"
-            # / f"instance_segmentation/2023-11-06_InstSeg_Unet_resnet152_wk-only_896px_no-input-seg.onnx"
-            # / f"instance_segmentation/2023-11-02_InstSeg_Unet_mitb5_wk-only_896px_no-input-seg.onnx"
-            # / f"instance_segmentation/2023-11-09_InstSeg_Unet_mitb5_wk-only_896px_no-input-seg.onnx"
-            / f"instance_segmentation/2023-11-09_InstSeg_Unet_resnet152_wk-only_896px_no-input-seg.onnx"
-        )
-        return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False, height=px)
+    def get_best_instance_segmentation_model(*args, **kwargs):
+        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-09_Seg25_Unet_resnet152_vert-only_896px_no-input-seg.onnx"
+        onnx_model_path = download_file_with_progress(model_url)
+        return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False)
 
     def save_index_list(self):
         path = self.cache_path / "index_list.npz"

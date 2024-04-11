@@ -19,15 +19,9 @@ VECTOR_TABLE_PATH = DATASETS_PATH / "vector_table_new.npz"
 # Paths outside repository
 
 NAS_RESEARCH_PATH = Path("~/devel/data_remote/nas_research").expanduser().resolve()
-NAKO_DATASET_PATH = NAS_RESEARCH_PATH / "<path>"
+NAKO_DATASET_PATH = NAS_RESEARCH_PATH / "path"
 
 LOCAL_NAKO_DATASET_PATH = Path.home() / "Data/nako/2022-08-22"
-if not NAKO_DATASET_PATH.exists() and LOCAL_NAKO_DATASET_PATH.exists():
-    NAKO_DATASET_PATH = LOCAL_NAKO_DATASET_PATH
-
-NAS_PRIMARY_PATH = Path("~/devel/data_remote/nas_primary").expanduser().resolve()
-RAW_NAKO_DATASET_PATH = NAS_PRIMARY_PATH / "<path>"
-
 
 VAL_SPLIT_CSV_PATH = DATASETS_PATH / "nako_splits/val_seg.csv"
 TRAIN_SPLIT_CSV_PATH = DATASETS_PATH / "nako_splits/train_seg.csv"
