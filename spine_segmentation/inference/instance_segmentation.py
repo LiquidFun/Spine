@@ -118,42 +118,9 @@ def post_process_instances(vertebra_instances, segmentation, plot_dir=None):
                 best_mse = mse
                 best_vertebra_instances = curr_vertebra_instances
 
-    if plot_dir is not None:
-        import matplotlib.pyplot as plt
-
-        # fig, axes = plt.subplots(4, (len(plots) + 3) // 4)
-        fig, axes = plt.subplots(2, len(plots))
-        fig.tight_layout(pad=0)
-
-        from spine_segmentation.visualisation.color_palettes import get_alternating_palette
-
-        id_to_labels = dict(zip(range(1, 50), get_labels_for_n_classes(49)))
-        directory = get_next_log_dir()
-        for i, (instances, title, error_map) in enumerate(plots):
-            alternating = get_alternating_palette()
-            ax = axes[0, i]
-            single_plot(ax, alternating, None, instances[8, :, ::-1].T, id_to_labels, title, font_scale=0.4)
-            ax = axes[1, i]
-            single_plot(ax, alternating, error_map[8, :, ::-1].T != 0, None, id_to_labels, None, font_scale=0.4)
-
-        plt.savefig(plot_dir / f"mse_comparison.png", dpi=600)
-        plt.close()
-    # fig.close()
-
-    # np.unique(split_vertebra_segmentation + add2 * 100)
-    # plt.imshow((vertebra_instances - (split_vertebra_segmentation + add2 * i))[10])
-    # plt.imshow((split_vertebra_segmentation)[10])
-    # plt.show()
 
     # vertebra_instances = split_vertebra_segmentation + add2 * best_i
     vertebra_instances = best_vertebra_instances
-
-    # print(f"{np.unique(split_segmentation)=}")
-    # for i in np.unique(split_segmentation)[1:]:
-    #     instance_mask = split_segmentation == i
-    #     instance = vertebra_instances[instance_mask]
-    #     most_common = np.bincount(instance).argmax()
-    #     vertebra_instances[instance_mask] = most_common
 
     planes = get_planes_from_rois(vertebra_instances)
     # vertebrae = separate_segmented_rois(arr3d == 1)
@@ -185,6 +152,20 @@ MODEL_HEIGHT = 896
 DeviceType = Union[Literal["CPU", "GPU"], int]
 
 
+def _add_channel_to_3d_mri(mri3d: np.ndarray):
+    """Given a shape (20, 320, 896), convert it to (20, 3, 320, 896), where in the RGB channel adjacent slices are encoded"""
+    first = np.roll(mri3d, axis=0, shift=1)
+    first[0, :, :] = first[1, :, :]
+
+    last = np.roll(mri3d, axis=0, shift=-1)
+    last[-1, :, :] = last[-2, :, :]
+
+    result = np.stack([first, mri3d, last], axis=1)
+    new_shape = (mri3d.shape[0], 3, mri3d.shape[1], mri3d.shape[2])
+    assert new_shape == result.shape
+    return result
+
+
 class SegmentationInference:
 
     def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU"):
@@ -213,22 +194,24 @@ class SegmentationInference:
             logger.error(f"mri_3d_numpy_image must be 3 dimensional. Got {mri_3d_numpy_image.shape}. "
                          f"Consider dropping the batch-dimension and just using the 3D mri image as entire input.")
 
-        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, mri_3d_numpy_image.shape[3] - MODEL_HEIGHT))
-        cropped_padded_seg_input = np.pad(mri_3d_numpy_image, padding_to_896, mode="constant")
+        mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
+
+        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, mri_4d_with_channels.shape[3] - MODEL_HEIGHT))
+        cropped_padded_seg_input = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
         seg_npz = self._onnx_seg_inference.inference(cropped_padded_seg_input)
         inst_seg_input = seg_npz["segmentation"][:, None, :, :]
         cropped_inst_seg_input = inst_seg_input[:, :, :, :MODEL_HEIGHT]
         padding_to_416 = ((0, 0), (0, 0), (0, 0), (0, MODEL_HEIGHT - MODEL_HEIGHT))
         cropped_input_image_with_gt = np.concatenate(
             [
-                np.pad(mri_3d_numpy_image[:, 1:2, :, :], padding_to_416, mode="constant"),
+                np.pad(mri_4d_with_channels[:, 1:2, :, :], padding_to_416, mode="constant"),
                 (cropped_inst_seg_input == 1),
                 (cropped_inst_seg_input == 2),
             ],
             axis=1,
         )
         cropped_input_image_with_gt = cropped_input_image_with_gt.astype(np.float32)
-        cropped_input_image_without_gt = np.pad(mri_3d_numpy_image[:, :, :, :], padding_to_416, mode="constant").astype(
+        cropped_input_image_without_gt = np.pad(mri_4d_with_channels[:, :, :, :], padding_to_416, mode="constant").astype(
             np.float32
         )
 

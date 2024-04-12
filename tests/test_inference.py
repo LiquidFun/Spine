@@ -16,7 +16,8 @@ def main():
 
     for image, *_ in sample_iterator:
         print(image.shape)
-        segmentation = inference.segment(image)
+        assert image.shape[1] == 3
+        segmentation = inference.segment(image[:, 1, :, :], batch_size=1)
         open_in_blender({"instances": segmentation.instance_segmentation})
         break
 
