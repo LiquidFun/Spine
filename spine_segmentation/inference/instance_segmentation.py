@@ -1,8 +1,8 @@
-import random
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal, Union, Dict
 
+from loguru import logger
 
 from spine_segmentation.inference.onnx_model import ONNXInferenceModel
 from spine_segmentation.instance_separation.instance_separation import (
@@ -11,8 +11,6 @@ from spine_segmentation.instance_separation.instance_separation import (
     separate_rois_with_labels,
     separate_segmented_rois_by_planes,
 )
-from spine_segmentation.resources.paths import TRAIN_SPLIT_CSV_PATH, VAL_SPLIT_CSV_PATH
-from spine_segmentation.resources.other_paths import RAW_NAKO_DATASET_PATH
 from spine_segmentation.spine_types.labels import get_labels_for_n_classes
 from spine_segmentation.utils.log_dir import get_next_log_dir
 from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
@@ -83,13 +81,7 @@ def open_npz_and_plot_rois(npz, plot_path):
 def post_process_instances(vertebra_instances, segmentation, plot_dir=None):
     vertebra_instances = vertebra_instances.copy()
     vertebra = segmentation == 1
-    # from matplotlib import pyplot as plt
 
-    # plt.imshow(vertebra_instances[8])
-    # plt.imshow(instance_mask[8])
-    # plt.imshow(vertebra[8])
-    # plt.imshow(split_segmentation[8])
-    # plt.show()
     vertebra_instances[~vertebra] = 0
     split_segmentation, _ = separate_rois_with_labels(segmentation)
     split_vertebra_segmentation = split_segmentation.copy()
@@ -99,7 +91,6 @@ def post_process_instances(vertebra_instances, segmentation, plot_dir=None):
     print(split_vertebra_segmentation.shape, np.unique(split_vertebra_segmentation))
     add2_only_s1 = (split_vertebra_segmentation == split_vertebra_segmentation.max()) * 2
 
-    # best_i = 0
     best_vertebra_instances = split_vertebra_segmentation
     best_mse = 1e9
 
@@ -182,144 +173,6 @@ def print_stats_summary(stats):
     print(f"{correct_sum=} / {len(stats)}, {correct_no_edges_sum=} / {len(stats)}")
 
 
-def plot_every_val_dataset(directory=None, device=3, model_height=896, cropped_height=None, cropped_V=None):
-    import torch
-    from spine_segmentation.datasets.sample import SampleIterator, get_random_crop_slice
-    from spine_segmentation.plotting.plot_slice import get_stats, plot_npz, single_plot
-    from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
-    from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
-
-    if directory is None:
-        directory = get_next_log_dir()
-    directory = Path(directory)
-
-    if cropped_V is not None:
-        assert 1 <= cropped_V <= 49
-
-    if cropped_height is not None:
-        assert 50 <= cropped_V
-
-    sample_iterator = SampleIterator(
-        expand_path_to_data_dirs(RAW_NAKO_DATASET_PATH), add_adjacent_slices=True, skip_first_percent=0.9505
-    )
-
-    # index_list_path = (
-    #     Path.home() / "devel/src/git/spine_annotator/cache/onnx_inference/2023-09-12_Seg_Unet_mitb5/index_list.npz"
-    # )
-    # val_dataloader = get_dataloader("val", index_list_path, bs=1)
-
-    val_dataloader = SegmentationDataModule(
-        [TRAIN_SPLIT_CSV_PATH, VAL_SPLIT_CSV_PATH],
-        add_adjacent_slices=True,
-        batch_size=16,
-        # crop_height_to_px=416,
-        target_shape=(18, 320, 896),
-    ).val_dataloader()
-
-    stats = []
-
-    gt = None
-    # cropped_height = 50
-    random.seed(0)
-    # for i, (image, _, sample, path) in enumerate(sample_iterator):
-    # for i, (image, *_) in enumerate(sample_iterator):
-    for i, (image, gt) in enumerate(val_dataloader):
-        # if i >= 100:
-        # break
-
-        if isinstance(image, torch.Tensor):
-            image = image.cpu().detach().numpy()
-
-        if gt is None:
-            gt_npz = onnx_seg_inference.inference(image)
-        else:
-            gt_instances, id_to_label = separate_rois_with_labels(gt.numpy()[:, 0, :, :])
-            gt_npz = {"instances": gt_instances, "id_to_label": id_to_label}
-
-        gt_npz["instances"][gt_npz["instances"] == gt_npz["instances"].max()] = 49
-
-        print(gt_npz["instances"].shape)
-
-        orig_gt_nonzero = np.nonzero(np.any(gt_npz["instances"], axis=(0, 1)))[0]
-        gt_start_at = orig_gt_nonzero[0]
-        gt_end_at = orig_gt_nonzero[-1]
-        print(f"{gt_start_at=} {gt_end_at=}")
-        how_many_crops = 10
-        if cropped_height == model_height == 896:
-            how_many_crops = 1
-            gt_end_at = gt_start_at = 0
-
-        # for start_at in np.linspace(gt_start_at, gt_end_at - cropped_height, how_many_crops):
-        for start_at_class in range(1, 49 - cropped_V + 2, 2):  # +2 so that 49 is inclusive
-            end_at_class = start_at_class + cropped_V - 1
-            try:
-                print(f"\n\n============ Processing sample {i}: {start_at_class}-{end_at_class} =============\n")
-                print(gt_npz["instances"].shape)
-                relevant_classes = np.any(
-                    (gt_npz["instances"] >= start_at_class) & (gt_npz["instances"] <= end_at_class), axis=(0, 1)
-                )
-                print(f"{relevant_classes.shape=}")
-                nonzero_relevant_classes = np.nonzero(relevant_classes)[0]
-                start_at = nonzero_relevant_classes[0]
-                end_at = nonzero_relevant_classes[-1]
-                cropped_height = end_at - start_at
-                print(f"{start_at=} {end_at=} {cropped_height=}")
-
-                image = np.array(image)
-                print(image.shape)
-
-                crop_slice = get_random_crop_slice(cropped_height, image.shape[3], start_at=round(start_at))
-
-                curr_dir = directory / f"sample_{i:03}_{crop_slice.start:03}-{crop_slice.stop:03}"
-                curr_dir.mkdir(parents=True, exist_ok=True)
-
-                # ==================
-                # Create ground truth segmentation
-                # ==================
-
-                cropped_instance_gt = gt_npz["instances"][:, None, :, crop_slice].copy(order="C")
-
-                # ==================
-                # Create cropped input image for segmentation model (which will be used as input for instance segmentation)
-                # ==================
-
-                cropped_seg_input = image[:, :, :, crop_slice].copy(order="C")
-                new_npz = instance_segmentation_for_image(
-                    crop_slice,
-                    cropped_height,
-                    cropped_instance_gt,
-                    cropped_seg_input,
-                    curr_dir,
-                    directory,
-                    gt_npz,
-                    image,
-                    model_height,
-                    onnx_inst_inference,
-                    onnx_seg_inference,
-                    stats,
-                )
-                stats.append(get_stats(new_npz["instances_post_processed"], new_npz["gt_instances"]))
-                np.savez_compressed(directory / "stats.npz", stats=stats)
-                open_npz_in_blender(new_npz)
-                plot_npz(new_npz, curr_dir / "plot.png", slices=range(7, 10), stats=stats[-1])
-                print_stats_summary(stats)
-                # if i > 50:
-                #    break
-                # exit(0)
-            except KeyboardInterrupt:
-                raise
-            except:
-                print(f"Error processing sample {i}")
-                stats.append({})
-                import traceback
-
-                traceback.print_exc()
-                continue
-
-    # open_npz_and_plot_rois(new_npz, curr_dir / "plot.png")
-    # open_npz_in_blender_separate_rois(npz, curr_dir / "render.png")
-
-
 @dataclass
 class SegmentationResult:
     semantic_segmentation: np.ndarray
@@ -335,57 +188,57 @@ DeviceType = Union[Literal["CPU", "GPU"], int]
 class SegmentationInference:
 
     def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU"):
-        self.model_height = MODEL_HEIGHT
-        self.onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=segmentation_device)
-        self.onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(
+        self._model_height = MODEL_HEIGHT
+        self._onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=segmentation_device)
+        self._onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(
             device=instance_segmentation_device
         )
 
     def segment(
         self,
-        input_image,
-        curr_dir=None,
+        mri_3d_numpy_image: np.ndarray,
+        *,
+        batch_size: int,
+        cache_dir: Union[Literal["auto"], None, Path, str] = "auto",
     ):
-        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, input_image.shape[3] - MODEL_HEIGHT))
-        cropped_padded_seg_input = np.pad(input_image, padding_to_896, mode="constant")
-        seg_npz = self.onnx_seg_inference.inference(cropped_padded_seg_input)
+        if len(mri_3d_numpy_image.shape) < 3:
+            logger.error(
+                f"mri_3d_numpy_image must be 3 dimensional. Got {mri_3d_numpy_image.shape}. If you "
+                f"wish to segment only a 2D slice, consider repeating the slice three times in the "
+                f"first dimension, resulting in this shape: {(3, *mri_3d_numpy_image.shape)}:"
+                "\n\n\tnp.tile(input_image, (3, 1, 1))\n"
+            )
+            exit(1)
+        if len(mri_3d_numpy_image.shape) > 3:
+            logger.error(f"mri_3d_numpy_image must be 3 dimensional. Got {mri_3d_numpy_image.shape}. "
+                         f"Consider dropping the batch-dimension and just using the 3D mri image as entire input.")
+
+        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, mri_3d_numpy_image.shape[3] - MODEL_HEIGHT))
+        cropped_padded_seg_input = np.pad(mri_3d_numpy_image, padding_to_896, mode="constant")
+        seg_npz = self._onnx_seg_inference.inference(cropped_padded_seg_input)
         inst_seg_input = seg_npz["segmentation"][:, None, :, :]
         cropped_inst_seg_input = inst_seg_input[:, :, :, :MODEL_HEIGHT]
         padding_to_416 = ((0, 0), (0, 0), (0, 0), (0, MODEL_HEIGHT - MODEL_HEIGHT))
         cropped_input_image_with_gt = np.concatenate(
             [
-                np.pad(input_image[:, 1:2, :, :], padding_to_416, mode="constant"),
+                np.pad(mri_3d_numpy_image[:, 1:2, :, :], padding_to_416, mode="constant"),
                 (cropped_inst_seg_input == 1),
                 (cropped_inst_seg_input == 2),
             ],
             axis=1,
         )
         cropped_input_image_with_gt = cropped_input_image_with_gt.astype(np.float32)
-        cropped_input_image_without_gt = np.pad(input_image[:, :, :, :], padding_to_416, mode="constant").astype(
+        cropped_input_image_without_gt = np.pad(mri_3d_numpy_image[:, :, :, :], padding_to_416, mode="constant").astype(
             np.float32
         )
 
-        new_npz = self.onnx_inst_inference.inference(cropped_input_image_without_gt)
+        new_npz = self._onnx_inst_inference.inference(cropped_input_image_without_gt)
         new_npz["instances"] = new_npz["instances"] * 2 - (new_npz["instances"] != 0)
         # new_npz["id_to_label"] = gt_npz["id_to_label"]
         # new_npz["gt_id_to_label"] = gt_npz["id_to_label"]
         new_npz["instances_post_processed"] = post_process_instances(
-            new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=curr_dir
+            new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=cache_dir
         )
         new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
         id_to_labels = get_labels_for_n_classes(49)
         return SegmentationResult(inst_seg_input, new_npz["instances_post_processed"], id_to_labels)
-
-
-def main():
-    # Get first argument as int
-    import sys
-
-    slice_height = int(sys.argv[1]) if len(sys.argv) > 1 else 49
-    gpu = int(sys.argv[2]) if len(sys.argv) > 2 else "CPU"
-    # plot_every_val_dataset(cropped_height=slice_height, device=gpu)
-    plot_every_val_dataset(cropped_V=slice_height, device=gpu)
-
-
-if __name__ == "__main__":
-    main()
