@@ -147,8 +147,6 @@ class SegmentationResult:
     id_to_label: Dict[int, str]
 
 
-MODEL_HEIGHT = 896
-
 DeviceType = Union[Literal["CPU", "GPU"], int]
 
 
@@ -169,7 +167,8 @@ def _add_channel_to_3d_mri(mri3d: np.ndarray):
 class SegmentationInference:
 
     def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU"):
-        self._model_height = MODEL_HEIGHT
+        self._model_image_height = 896
+        self._model_image_width = 320
         self._onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=segmentation_device)
         self._onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(
             device=instance_segmentation_device
@@ -196,22 +195,19 @@ class SegmentationInference:
 
         mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
 
-        padding_to_896 = ((0, 0), (0, 0), (0, 0), (0, mri_4d_with_channels.shape[3] - MODEL_HEIGHT))
-        cropped_padded_seg_input = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
+        cropped_padded_seg_input = self._crop_and_pad_to_model_image_dims(mri_4d_with_channels)
         seg_npz = self._onnx_seg_inference.inference(cropped_padded_seg_input)
         inst_seg_input = seg_npz["segmentation"][:, None, :, :]
-        cropped_inst_seg_input = inst_seg_input[:, :, :, :MODEL_HEIGHT]
-        padding_to_416 = ((0, 0), (0, 0), (0, 0), (0, MODEL_HEIGHT - MODEL_HEIGHT))
+        cropped_inst_seg_input = inst_seg_input[:, :, :, :self._model_image_height]
         cropped_input_image_with_gt = np.concatenate(
             [
-                np.pad(mri_4d_with_channels[:, 1:2, :, :], padding_to_416, mode="constant"),
+                mri_4d_with_channels[:, 1:2, :, :],
                 (cropped_inst_seg_input == 1),
                 (cropped_inst_seg_input == 2),
             ],
             axis=1,
-        )
-        cropped_input_image_with_gt = cropped_input_image_with_gt.astype(np.float32)
-        cropped_input_image_without_gt = np.pad(mri_4d_with_channels[:, :, :, :], padding_to_416, mode="constant").astype(
+        ).astype(np.float32)
+        cropped_input_image_without_gt = mri_4d_with_channels[:, :, :, :].astype(
             np.float32
         )
 
@@ -225,3 +221,22 @@ class SegmentationInference:
         new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
         id_to_labels = get_labels_for_n_classes(49)
         return SegmentationResult(inst_seg_input, new_npz["instances_post_processed"], id_to_labels)
+
+    def _crop_and_pad_to_model_image_dims(self, mri_4d_with_channels: np.ndarray):
+        _, _, width, height = mri_4d_with_channels.shape
+        model_width, model_height = self._model_image_width, self._model_image_height
+
+        # Crop
+        from_width = width // 2 - model_width // 2
+        to_width = from_width + model_width
+        mri_4d_with_channels = mri_4d_with_channels[:, :, from_width:to_width, 0:model_height]
+
+        # Padding
+        # 2 different widths, because they could differ by 1 pixel
+        half_width_padding = (model_width - width) // 2
+        other_half_padding = model_width - width - half_width_padding
+        height_padding = height - model_height
+        padding_to_896 = ((0, 0), (0, 0), (half_width_padding, other_half_padding), (0, height_padding))
+        padded_seg_input = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
+        assert mri_4d_with_channels.shape[1:] == (3, model_width, model_height)
+        return padded_seg_input
