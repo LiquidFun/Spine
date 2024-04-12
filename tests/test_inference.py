@@ -1,12 +1,14 @@
 from pathlib import Path
 
+import numpy as np
+
 from spine_segmentation import SegmentationInference
 from spine_segmentation.datasets.sample import SampleIterator
 from spine_segmentation.datasets.path_helper import expand_path_to_data_dirs
 from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
 
 
-def main():
+def test_inference_on_real_data():
     from spine_segmentation.resources.other_paths import RAW_NAKO_DATASET_PATH
 
     inference = SegmentationInference()
@@ -22,5 +24,12 @@ def main():
         break
 
 
-if __name__ == "__main__":
-    main()
+def test_on_random_too_large():
+    image = np.random.rand(20, 320, 1324)
+    inference = SegmentationInference()
+
+    segmentation = inference.segment(image, batch_size=1)
+
+
+if __name__ == '__main__':
+    test_on_random_too_large()

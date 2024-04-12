@@ -194,9 +194,9 @@ class SegmentationInference:
                          f"Consider dropping the batch-dimension and just using the 3D mri image as entire input.")
 
         mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
+        mri_4d_with_channels = self._crop_and_pad_to_model_image_dims(mri_4d_with_channels)
 
-        cropped_padded_seg_input = self._crop_and_pad_to_model_image_dims(mri_4d_with_channels)
-        seg_npz = self._onnx_seg_inference.inference(cropped_padded_seg_input)
+        seg_npz = self._onnx_seg_inference.inference(mri_4d_with_channels)
         inst_seg_input = seg_npz["segmentation"][:, None, :, :]
         cropped_inst_seg_input = inst_seg_input[:, :, :, :self._model_image_height]
         cropped_input_image_with_gt = np.concatenate(
@@ -207,9 +207,7 @@ class SegmentationInference:
             ],
             axis=1,
         ).astype(np.float32)
-        cropped_input_image_without_gt = mri_4d_with_channels[:, :, :, :].astype(
-            np.float32
-        )
+        cropped_input_image_without_gt = mri_4d_with_channels[:, :, :, :].astype(np.float32)
 
         new_npz = self._onnx_inst_inference.inference(cropped_input_image_without_gt)
         new_npz["instances"] = new_npz["instances"] * 2 - (new_npz["instances"] != 0)
@@ -232,11 +230,12 @@ class SegmentationInference:
         mri_4d_with_channels = mri_4d_with_channels[:, :, from_width:to_width, 0:model_height]
 
         # Padding
+        _, _, width, height = mri_4d_with_channels.shape
         # 2 different widths, because they could differ by 1 pixel
         half_width_padding = (model_width - width) // 2
         other_half_padding = model_width - width - half_width_padding
-        height_padding = height - model_height
+        height_padding = model_height - height
         padding_to_896 = ((0, 0), (0, 0), (half_width_padding, other_half_padding), (0, height_padding))
-        padded_seg_input = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
-        assert mri_4d_with_channels.shape[1:] == (3, model_width, model_height)
-        return padded_seg_input
+        mri_4d_with_channels = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
+        assert mri_4d_with_channels.shape[1:] == (3, model_width, model_height), f"{mri_4d_with_channels.shape[1:]} != {(3, model_width, model_height)=}"
+        return mri_4d_with_channels.astype(np.float32)
