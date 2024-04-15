@@ -33,5 +33,5 @@ def test_on_random_too_large():
 
 
 if __name__ == '__main__':
-    test_inference_on_real_data()
-    # test_on_random_too_large()
+    # test_inference_on_real_data()
+    test_on_random_too_large()
