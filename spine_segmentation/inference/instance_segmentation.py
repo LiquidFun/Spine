@@ -162,7 +162,7 @@ class SegmentationInference:
         id_to_labels = get_labels_for_n_classes(49)
 
         instances = new_npz["instances_post_processed"]
-        segmentation = new_npz["segmentation"]
+        segmentation = seg_npz["segmentation"]
         if self._output_same_shape_as_input:
             segmentation = self._crop_and_pad_to_shape(segmentation, initial_shape[1], initial_shape[2])
             instances = self._crop_and_pad_to_shape(instances, initial_shape[1], initial_shape[2])
