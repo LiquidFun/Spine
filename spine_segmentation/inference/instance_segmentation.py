@@ -162,12 +162,13 @@ class SegmentationInference:
         id_to_labels = get_labels_for_n_classes(49)
 
         instances = new_npz["instances_post_processed"]
+        segmentation = new_npz["segmentation"]
         if self._output_same_shape_as_input:
-            inst_seg_input = self._crop_and_pad_to_shape(inst_seg_input, initial_shape[1], initial_shape[2])
+            segmentation = self._crop_and_pad_to_shape(segmentation, initial_shape[1], initial_shape[2])
             instances = self._crop_and_pad_to_shape(instances, initial_shape[1], initial_shape[2])
-            assert inst_seg_input.shape == initial_shape
+            assert segmentation.shape == initial_shape
 
-        return SegmentationResult(inst_seg_input, instances, id_to_labels)
+        return SegmentationResult(segmentation, instances, id_to_labels)
 
     def _crop_and_pad_to_shape(self, mri_3d_with_channels: np.ndarray, target_width, target_height):
         _, width, height = mri_3d_with_channels.shape
