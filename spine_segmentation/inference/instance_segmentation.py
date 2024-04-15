@@ -174,16 +174,16 @@ class SegmentationInference:
         _, width, height = mri_3d_with_channels.shape
 
         # Crop
-        from_width = width // 2 - target_width // 2
+        from_width = max(0, width // 2 - target_width // 2)
         to_width = from_width + target_width
         mri_3d_with_channels = mri_3d_with_channels[:, from_width:to_width, 0:target_height]
 
         # Padding
         _, width, height = mri_3d_with_channels.shape
         # 2 different widths, because they could differ by 1 pixel
-        half_width_padding = (target_width - width) // 2
-        other_half_padding = target_width - width - half_width_padding
-        height_padding = target_height - height
+        half_width_padding = max(0, (target_width - width) // 2)
+        other_half_padding = max(0, target_width - width - half_width_padding)
+        height_padding = max(0, target_height - height)
         padding_to_896 = ((0, 0), (half_width_padding, other_half_padding), (0, height_padding))
         mri_3d_with_channels = np.pad(mri_3d_with_channels, padding_to_896, mode="constant")
         assert mri_3d_with_channels.shape[1:] == (target_width, target_height), f"{mri_3d_with_channels.shape[1:]} != {(target_width, target_height)=}"
