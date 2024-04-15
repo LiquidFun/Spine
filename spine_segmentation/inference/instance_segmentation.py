@@ -18,66 +18,6 @@ from spine_segmentation.visualisation.blender.open_in_blender import open_in_ble
 import numpy as np
 
 
-def get_dataloader(
-    train_or_val: Literal["train", "val"], path: Union[Path, str] = None, *, bs: int = 16, crop_height: int = None
-):
-    from spine_segmentation.datasets.segmentation_dataset import SegmentationDataModule
-
-    args = [] if path is None else [path]
-    data_module = SegmentationDataModule(
-        *args,
-        # add_bs_wk_as_channels=True,
-        add_adjacent_slices=True,
-        batch_size=bs,
-        num_workers=4,
-        crop_height_to_px=crop_height,
-        target_shape=(None, 320, 896),
-    )
-    if train_or_val == "train":
-        return data_module.train_dataloader()
-    elif train_or_val == "val":
-        return data_module.val_dataloader()
-
-
-def plot_model(onnx_path):
-    import netron
-
-    netron.start(onnx_path)
-
-
-def open_npz_in_blender(numpy_path):
-    if isinstance(numpy_path, str) or isinstance(numpy_path, Path):
-        spines = np.load(numpy_path)
-    else:
-        spines = numpy_path
-    output = spines["instances_post_processed"]
-    open_in_blender({"instances": output})
-
-
-def open_npz_in_blender_separate_rois(npz, render_to_instead=None):
-    # output, gt, instances = npz["segmentation"], npz["gt"], npz["instances"]
-    # id_to_label = spines["id_to_label"].item()
-    # discs = (instances % 2 == 0) * (instances != 0) * 2
-    # separated_discs = separate_segmented_rois(discs) * 2
-    # planes = get_planes_from_discs(separated_discs, id_to_label=id_to_label)
-    # collection = BlenderCollection("planes", planes)
-
-    open_in_blender({"instances": npz["instances"]}, render_to_instead=render_to_instead)
-    # open_in_blender({"instances": instances, "gt": gt}, [collection], smooth_spine=False)
-
-
-def open_npz_and_plot_rois(npz, plot_path):
-    # spines = np.load(numpy_path)
-    # output, gt, instances = spines["output"], spines["gt"], spines["instances"]
-    # vertebrae = separate_segmented_rois(output == 1)
-    # discs = separate_segmented_rois(output == 2)
-    # instances = vertebrae * 2 + (discs * 2 + (discs != 0))
-    plot_npz(npz, plot_path, slices=range(0, 16))
-
-
-# def find_best_matching(vertebra_instances, vertebra_segmentation):
-
-
 def post_process_instances(vertebra_instances, segmentation, plot_dir=None):
     vertebra_instances = vertebra_instances.copy()
     vertebra = segmentation == 1
@@ -166,13 +106,14 @@ def _add_channel_to_3d_mri(mri3d: np.ndarray):
 
 class SegmentationInference:
 
-    def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU"):
+    def __init__(self, segmentation_device: DeviceType = "CPU", instance_segmentation_device: DeviceType = "CPU", *, output_same_shape_as_input: bool = False):
         self._model_image_height = 896
         self._model_image_width = 320
         self._onnx_seg_inference = ONNXInferenceModel.get_best_segmentation_model(device=segmentation_device)
         self._onnx_inst_inference = ONNXInferenceModel.get_best_instance_segmentation_model(
             device=instance_segmentation_device
         )
+        self._output_same_shape_as_input = output_same_shape_as_input
 
     def segment(
         self,
@@ -181,6 +122,7 @@ class SegmentationInference:
         batch_size: int,
         cache_dir: Union[Literal["auto"], None, Path, str] = "auto",
     ):
+        initial_shape = mri_3d_numpy_image.shape
         if len(mri_3d_numpy_image.shape) < 3:
             logger.error(
                 f"mri_3d_numpy_image must be 3 dimensional. Got {mri_3d_numpy_image.shape}. If you "
@@ -194,7 +136,7 @@ class SegmentationInference:
                          f"Consider dropping the batch-dimension and just using the 3D mri image as entire input.")
 
         mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
-        mri_4d_with_channels = self._crop_and_pad_to_model_image_dims(mri_4d_with_channels)
+        mri_4d_with_channels = self._crop_and_pad_to_shape(mri_4d_with_channels, self._model_image_width, self._model_image_height)
 
         seg_npz = self._onnx_seg_inference.inference(mri_4d_with_channels)
         inst_seg_input = seg_npz["segmentation"][:, None, :, :]
@@ -218,24 +160,30 @@ class SegmentationInference:
         )
         new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
         id_to_labels = get_labels_for_n_classes(49)
-        return SegmentationResult(inst_seg_input, new_npz["instances_post_processed"], id_to_labels)
 
-    def _crop_and_pad_to_model_image_dims(self, mri_4d_with_channels: np.ndarray):
+        instances = new_npz["instances_post_processed"]
+        if self._output_same_shape_as_input:
+            inst_seg_input = self._crop_and_pad_to_shape(inst_seg_input, initial_shape[1], initial_shape[2])
+            instances = self._crop_and_pad_to_shape(instances, initial_shape[1], initial_shape[2])
+            assert inst_seg_input.shape == initial_shape
+
+        return SegmentationResult(inst_seg_input, instances, id_to_labels)
+
+    def _crop_and_pad_to_shape(self, mri_4d_with_channels: np.ndarray, target_width, target_height):
         _, _, width, height = mri_4d_with_channels.shape
-        model_width, model_height = self._model_image_width, self._model_image_height
 
         # Crop
-        from_width = width // 2 - model_width // 2
-        to_width = from_width + model_width
-        mri_4d_with_channels = mri_4d_with_channels[:, :, from_width:to_width, 0:model_height]
+        from_width = width // 2 - target_width // 2
+        to_width = from_width + target_width
+        mri_4d_with_channels = mri_4d_with_channels[:, :, from_width:to_width, 0:target_height]
 
         # Padding
         _, _, width, height = mri_4d_with_channels.shape
         # 2 different widths, because they could differ by 1 pixel
-        half_width_padding = (model_width - width) // 2
-        other_half_padding = model_width - width - half_width_padding
-        height_padding = model_height - height
+        half_width_padding = (target_width - width) // 2
+        other_half_padding = target_width - width - half_width_padding
+        height_padding = target_height - height
         padding_to_896 = ((0, 0), (0, 0), (half_width_padding, other_half_padding), (0, height_padding))
         mri_4d_with_channels = np.pad(mri_4d_with_channels, padding_to_896, mode="constant")
-        assert mri_4d_with_channels.shape[1:] == (3, model_width, model_height), f"{mri_4d_with_channels.shape[1:]} != {(3, model_width, model_height)=}"
+        assert mri_4d_with_channels.shape[1:] == (3, target_width, target_height), f"{mri_4d_with_channels.shape[1:]} != {(3, target_width, target_height)=}"
         return mri_4d_with_channels.astype(np.float32)
