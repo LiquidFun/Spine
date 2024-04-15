@@ -11,7 +11,7 @@ from spine_segmentation.instance_separation.instance_separation import (
     separate_rois_with_labels,
     separate_segmented_rois_by_planes,
 )
-from spine_segmentation.spine_types.labels import get_labels_for_n_classes
+from spine_segmentation.spine_types.labels import get_labels_for_n_classes, get_label_lookup_for_n_classes
 from spine_segmentation.utils.log_dir import get_next_log_dir
 from spine_segmentation.visualisation.blender.open_in_blender import open_in_blender
 
@@ -159,7 +159,7 @@ class SegmentationInference:
             new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=cache_dir
         )
         new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
-        id_to_labels = get_labels_for_n_classes(49)
+        id_to_labels = get_label_lookup_for_n_classes(49)
 
         instances = new_npz["instances_post_processed"]
         segmentation = seg_npz["segmentation"]
