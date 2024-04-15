@@ -19,10 +19,16 @@ def test_inference_on_real_data():
     for image, *_ in sample_iterator:
         print(image.shape)
         assert image.shape[1] == 3
-        segmentation = inference.segment(image[:, 1, :, :], batch_size=1)
-        print(segmentation.shape)
+        import matplotlib.pyplot as plt
+        img = image[:, 1, :, :400]
+        # plt.imshow(img)
+        # plt.hist(img)
+        # plt.show()
+        segmentation = inference.segment(img, batch_size=1)
+        print(segmentation.instance_segmentation.shape)
         open_in_blender({"instances": segmentation.instance_segmentation})
         break
+
 
 
 def test_on_random_too_large():
@@ -33,5 +39,5 @@ def test_on_random_too_large():
 
 
 if __name__ == '__main__':
-    # test_inference_on_real_data()
-    test_on_random_too_large()
+    test_inference_on_real_data()
+    # test_on_random_too_large()

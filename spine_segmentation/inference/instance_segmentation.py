@@ -135,7 +135,7 @@ class SegmentationInference:
             logger.error(f"mri_3d_numpy_image must be 3 dimensional. Got {mri_3d_numpy_image.shape}. "
                          f"Consider dropping the batch-dimension and just using the 3D mri image as entire input.")
 
-        mri_3d_numpy_image = self._crop_and_pad_to_shape(mri_3d_numpy_image, self._model_image_width, self._model_image_height)
+        mri_3d_numpy_image = self._crop_and_pad_to_shape(mri_3d_numpy_image, self._model_image_width, self._model_image_height).astype(np.float32)
         mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
 
         seg_npz = self._onnx_seg_inference.inference(mri_4d_with_channels)
@@ -187,4 +187,4 @@ class SegmentationInference:
         padding_to_896 = ((0, 0), (half_width_padding, other_half_padding), (0, height_padding))
         mri_3d_with_channels = np.pad(mri_3d_with_channels, padding_to_896, mode="constant")
         assert mri_3d_with_channels.shape[1:] == (target_width, target_height), f"{mri_3d_with_channels.shape[1:]} != {(target_width, target_height)=}"
-        return mri_3d_with_channels.astype(np.float32)
+        return mri_3d_with_channels
