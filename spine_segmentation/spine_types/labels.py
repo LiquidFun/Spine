@@ -32,5 +32,5 @@ def get_label_lookup_for_n_classes(n=47) -> Dict[int, str]:
     labels = get_labels_for_n_classes(n=n)
     label_lookup = {0: "0_unknown"}
     for i, label in enumerate(labels, 1):
-        label_lookup[label] = i
+        label_lookup[i] = label
     return label_lookup
