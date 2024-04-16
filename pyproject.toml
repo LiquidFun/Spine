@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spine-segmentation"
-version = "0.2.10"
+version = "0.2.11"
 description = "Anatomical labeling of the spine in small field-of-view MRI scans"
 authors = [
     "Brutenis Gliwa <brutenis@gmail.com>",
