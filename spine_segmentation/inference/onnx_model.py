@@ -43,13 +43,16 @@ class ONNXInferenceModel:
 
     @staticmethod
     def get_best_segmentation_model(*args, **kwargs):
-        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-06_Seg2_Unet_resnet152_896px.onnx"
+        # Newer model, but is worse on cropped images
+        # model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-06_Seg2_Unet_resnet152_896px.onnx"
+        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-09-12_Seg2_Unet_mitb5_896px.onnx"
         onnx_model_path = download_file_with_progress(model_url)
         return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=True)
 
     @staticmethod
     def get_best_instance_segmentation_model(*args, **kwargs):
-        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-09_Seg25_Unet_resnet152_vert-only_896px_no-input-seg.onnx"
+        # model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-09_Seg25_Unet_resnet152_vert-only_896px_no-input-seg.onnx"
+        model_url = "https://github.com/LiquidFun/Spine/releases/download/onnx_models_1.0.0/2023-11-06_Seg25_Unet_mitb5_vert-only_896px_no-input-seg.onnx"
         onnx_model_path = download_file_with_progress(model_url)
         return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False)
 

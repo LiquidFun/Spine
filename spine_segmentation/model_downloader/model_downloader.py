@@ -6,7 +6,7 @@ import requests
 from tqdm import tqdm
 
 
-def _get_config_path(program_name="spine") -> Path:
+def _get_config_path(program_name="spine-segmentation") -> Path:
     """Get OS-agnostic path for program configuration."""
 
     home = Path.home().absolute()
