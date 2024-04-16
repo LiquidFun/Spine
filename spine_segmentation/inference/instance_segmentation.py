@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal, Union, Dict
+from typing import Literal, Union, Dict, Optional
 
 from loguru import logger
 
@@ -83,7 +83,7 @@ def print_stats_summary(stats):
 @dataclass
 class SegmentationResult:
     semantic_segmentation: np.ndarray
-    instance_segmentation: np.ndarray
+    instance_segmentation: Optional[np.ndarray]
     id_to_label: Dict[int, str]
 
 
@@ -119,7 +119,8 @@ class SegmentationInference:
         self,
         mri_3d_numpy_image: np.ndarray,
         *,
-        batch_size: int,
+        # batch_size: int,
+        only_2class_segmentation: bool = False,
         cache_dir: Union[Literal["auto"], None, Path, str] = "auto",
     ):
         initial_shape = mri_3d_numpy_image.shape
@@ -139,36 +140,31 @@ class SegmentationInference:
         mri_4d_with_channels = _add_channel_to_3d_mri(mri_3d_numpy_image)
 
         seg_npz = self._onnx_seg_inference.inference(mri_4d_with_channels)
-        inst_seg_input = seg_npz["segmentation"][:, None, :, :]
-        cropped_inst_seg_input = inst_seg_input[:, :, :, :self._model_image_height]
-        cropped_input_image_with_gt = np.concatenate(
-            [
-                mri_4d_with_channels[:, 1:2, :, :],
-                (cropped_inst_seg_input == 1),
-                (cropped_inst_seg_input == 2),
-            ],
-            axis=1,
-        ).astype(np.float32)
-        cropped_input_image_without_gt = mri_4d_with_channels[:, :, :, :].astype(np.float32)
+        segmentation_2class_3d = seg_npz["segmentation"]
 
-        new_npz = self._onnx_inst_inference.inference(cropped_input_image_without_gt)
-        new_npz["instances"] = new_npz["instances"] * 2 - (new_npz["instances"] != 0)
-        # new_npz["id_to_label"] = gt_npz["id_to_label"]
-        # new_npz["gt_id_to_label"] = gt_npz["id_to_label"]
-        new_npz["instances_post_processed"] = post_process_instances(
-            new_npz["instances"], cropped_inst_seg_input[:, 0, :, :], plot_dir=cache_dir
-        )
-        new_npz["cropped_segmentation"] = cropped_inst_seg_input[:, 0, :, :]
+        if only_2class_segmentation:
+            instances = None
+        else:
+            new_npz = self._onnx_inst_inference.inference(mri_4d_with_channels.astype(np.float32))
+            vertebra_instances = new_npz["instances"]
+
+            # Multiply by two, because model only predicts vertebrae, but vertebrae IDs are even numbers
+            vertebra_instances = vertebra_instances * 2 - (vertebra_instances != 0)
+
+            # Post-processing adds the discs, and assigns the discs correct ids and filters small objects
+            instances = post_process_instances(
+                vertebra_instances, segmentation_2class_3d, plot_dir=cache_dir
+            )
+
+        if self._output_same_shape_as_input:
+            segmentation_2class_3d = self._crop_and_pad_to_shape(segmentation_2class_3d, initial_shape[1], initial_shape[2])
+            if instances is not None:
+                instances = self._crop_and_pad_to_shape(instances, initial_shape[1], initial_shape[2])
+            assert segmentation_2class_3d.shape == initial_shape
+
         id_to_labels = get_label_lookup_for_n_classes(49)
 
-        instances = new_npz["instances_post_processed"]
-        segmentation = seg_npz["segmentation"]
-        if self._output_same_shape_as_input:
-            segmentation = self._crop_and_pad_to_shape(segmentation, initial_shape[1], initial_shape[2])
-            instances = self._crop_and_pad_to_shape(instances, initial_shape[1], initial_shape[2])
-            assert segmentation.shape == initial_shape
-
-        return SegmentationResult(segmentation, instances, id_to_labels)
+        return SegmentationResult(segmentation_2class_3d, instances, id_to_labels)
 
     def _crop_and_pad_to_shape(self, mri_3d_with_channels: np.ndarray, target_width, target_height):
         _, width, height = mri_3d_with_channels.shape
