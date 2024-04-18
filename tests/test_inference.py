@@ -24,7 +24,7 @@ def test_inference_on_real_data():
         # plt.imshow(img)
         # plt.hist(img)
         # plt.show()
-        segmentation = inference.segment(img, batch_size=1)
+        segmentation = inference.segment(img)
         print(segmentation.instance_segmentation.shape)
         open_in_blender({"instances": segmentation.instance_segmentation})
         break
@@ -35,7 +35,7 @@ def test_on_random_too_large():
     image = np.random.rand(20, 320, 1324)
     inference = SegmentationInference(output_same_shape_as_input=True)
 
-    segmentation = inference.segment(image, batch_size=1)
+    segmentation = inference.segment(image)
 
 
 if __name__ == '__main__':

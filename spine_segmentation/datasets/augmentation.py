@@ -24,7 +24,7 @@ class ImageAugmentation(torch.nn.Module):
 
         if geometric_aug_type == "all":
             geometric_augmentations += [
-                K.RandomVerticalFlip(),  # Note that patient is lying on back, so this is actually a horizontal flip
+                # K.RandomVerticalFlip(),  # Note that patient is lying on back, so this is actually a horizontal flip
                 K.RandomAffine(degrees=20, translate=(0.1, 0.1), scale=(0.8, 1.2), p=0.50),
             ]
 

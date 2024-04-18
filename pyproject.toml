@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spine-segmentation"
-version = "0.3.1"
+version = "0.3.2"
 description = "Anatomical labeling of the spine in small field-of-view MRI scans"
 authors = [
     "Brutenis Gliwa <brutenis@gmail.com>",
@@ -26,8 +26,8 @@ numpy = "^1.23.0"                       # basic
 #torch-geometric = "^2.3.1"              # gnn in pytorch
 #lightning = "^2.2.1"
 # onnx = "^1.14.1"
-onnxruntime = "^1.15.1"
-onnxruntime-gpu = "^1.15.1"
+onnxruntime = "1.17.1"
+onnxruntime-gpu = "1.17.1"
 #torchvision = "^0.17.2"
 tqdm = "^4.66.2"
 requests = "^2.28.0"

@@ -56,6 +56,10 @@ class ONNXInferenceModel:
         onnx_model_path = download_file_with_progress(model_url)
         return ONNXInferenceModel(onnx_model_path, *args, **kwargs, is_segmentation_model=False)
 
+
+
+
+
     def save_index_list(self):
         path = self.cache_path / "index_list.npz"
         np.savez_compressed(
