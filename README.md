@@ -66,7 +66,9 @@ The pipeline has three steps:
 
 ![Pipeline overview](media/pipeline.png)
 
-1. **Segmentation** -- A slice-wise 2D U-Net (ResNet152 encoder, Jaccard loss) segments each sagittal slice into vertebra, IVD, and background. The best model achieved a Dice score of 0.919 on the validation set, outperforming a prior 3D patch-based approach on the same dataset.
+1. **Segmentation** -- A slice-wise 2D U-Net (ResNet152 encoder, Jaccard loss) segments each sagittal slice into vertebra, IVD, and background. The best model achieved a Dice score of 0.919 on the validation set, outperforming a prior 3D patch-based approach on the same dataset. Each slice is fed through the network together with its two adjacent slices (as RGB channels), and the resulting 2D segmentations are reassembled into a 3D volume.
+
+   ![Slice-wise segmentation with U-Net](media/segmentation.png)
 
 2. **Instance splitting** -- Connected vertebra/IVD regions are separated into individual instances. The best method splits along the IVD boundaries using plane fitting, achieving 99.2% valid separations on 10,833 scans.
 
@@ -91,9 +93,15 @@ Subset accuracy (every vertebra and IVD in the scan must be labeled correctly):
 | V=10 | ~40% | 92.6% | 0.847 |
 | V=15 | ~60% | 94.4% | 0.875 |
 
+Per-vertebra accuracy for the two most challenging FOV sizes (5 and 10 visible vertebrae). Accuracy is fairly consistent across most vertebrae, with dips around the mid-thoracic region where vertebrae lack distinguishing features. C2 and S1 are easiest to identify due to their unique shapes. L6 and L6-S1 have notably poor accuracy because lumbarization only occurs in ~6.6% of the population, so the model rarely sees these classes during training.
+
+![Per-vertebra accuracy for 5 and 10 visible vertebrae](media/results_5_10_vertebrae.png)
+
 Without the data generation pipeline (training only on the 162 manually annotated scans), accuracy drops by about 5 percentage points across all FOV sizes, confirming that the automatically generated training data from 10,833 scans is critical.
 
 The pipeline also detected lumbarization in 6.6% and sacralization in 3.6% of the 10,833 patients, roughly consistent with literature (typically ~4.7% each).
+
+![Sacralization and lumbarization prevalence](media/sacralisation_lumbarization.png)
 
 ## Citation
 
